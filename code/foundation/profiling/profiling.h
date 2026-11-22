@@ -1,0 +1,123 @@
+#pragma once
+#include "timing/time.h"
+#include "timing/timer.h"
+#include "util/stack.h"
+#include "util/dictionary.h"
+#include "util/stringatom.h"
+#include "util/tupleutility.h"
+#include "threading/thread.h"
+#include "threading/criticalsection.h"
+#include <atomic>
+#if NEBULA_ENABLE_PROFILING
+#define N_SCOPE(name, cat)              Profiling::ProfilingScopeLock __##name##cat##scope__(#name, #cat, __FILE__, __LINE__);
+#define N_SCOPE_DYN(str, cat)           Profiling::ProfilingScopeLock __dynscope##cat##__(str, #cat, __FILE__, __LINE__);
+#define N_SCOPE_ACCUM(name, cat)        Profiling::ProfilingScopeLock __##name##cat##scope__(#name, #cat, __FILE__, __LINE__, true);
+#define N_SCOPE_DYN_ACCUM(name, cat)    Profiling::ProfilingScopeLock __##name##cat##scope__(#name, #cat, __FILE__, __LINE__, true);
+#define N_MARKER_BEGIN(name, cat)       { Profiling::ProfilingScope __##name##cat##scope__ = {#name, #cat, __FILE__, __LINE__, false}; Profiling::ProfilingPushScope(__##name##cat##scope__); }
+#define N_MARKER_DYN_BEGIN(str, cat)    { Profiling::ProfilingScope __dynmarker##cat##__ = {str, #cat, __FILE__, __LINE__, false}; Profiling::ProfilingPushScope(__dynmarker##cat##__); }
+#define N_MARKER_END()                  { Profiling::ProfilingPopScope(); }
+#define N_COUNTER_INCR(name, value)     Profiling::ProfilingIncreaseCounter(name, value);
+#define N_COUNTER_DECR(name, value)     Profiling::ProfilingDecreaseCounter(name, value);
+#define N_BUDGET_COUNTER_SETUP(name, budget) Profiling::ProfilingSetupBudgetCounter(name, budget);
+#define N_BUDGET_COUNTER_INCR(name, value) Profiling::ProfilingBudgetIncreaseCounter(name, value);
+#define N_BUDGET_COUNTER_DECR(name, value) Profiling::ProfilingBudgetDecreaseCounter(name, value);
+#define N_BUDGET_COUNTER_RESET(name) Profiling::ProfilingBudgetResetCounter(name);
+#define N_DECLARE_COUNTER(name, label)  static const char* name = #label;
+#else
+#define N_SCOPE(name, cat)
+#define N_SCOPE_DYN(str, cat)
+#define N_SCOPE_ACCUM(name, cat)
+#define N_SCOPE_DYN_ACCUM(name, cat)
+#define N_MARKER_BEGIN(name, cat)
+#define N_MARKER_END()
+#define N_COUNTER_INCR(name, value)
+#define N_COUNTER_DECR(name, value)
+#define N_DECLARE_COUNTER(name, label)
+#endif
+namespace Profiling
+{
+struct ProfilingScope;
+struct ProfilingContext;
+void ProfilingPushScope(const ProfilingScope& scope);
+void ProfilingPopScope();
+void ProfilingNewFrame();
+Timing::Time ProfilingGetTime();
+void ProfilingRegisterThread();
+const Util::Array<ProfilingScope>& ProfilingGetScopes(Threading::ThreadId thread);
+const Util::Array<ProfilingContext> ProfilingGetContexts();
+void ProfilingClear();
+extern Util::Array<ProfilingContext> profilingContexts;
+extern Util::Array<Threading::CriticalSection*> contextMutexes;
+extern Util::Dictionary<Util::StringAtom, Util::Array<ProfilingScope>> scopesByCategory;
+extern Threading::CriticalSection categoryLock;
+extern Threading::AtomicCounter ProfilingContextCounter;
+void ProfilingIncreaseCounter(const char* id, uint64_t value);
+void ProfilingDecreaseCounter(const char* id, uint64_t value);
+const Util::Dictionary<const char*, uint64_t>& ProfilingGetCounters();
+void ProfilingSetupBudgetCounter(const char* id, uint64_t budget);
+void ProfilingBudgetIncreaseCounter(const char* id, uint64_t value);
+void ProfilingBudgetDecreaseCounter(const char* id, uint64_t value);
+void ProfilingBudgetResetCounter(const char* id);
+const Util::Dictionary<const char*, Util::Pair<uint64_t, uint64_t>>& ProfilingGetBudgetCounters();
+extern Threading::CriticalSection counterLock;
+extern Util::Dictionary<const char*, Util::Pair<uint64_t, uint64_t>> budgetCounters;
+extern Util::Dictionary<const char*, uint64_t> counters;
+struct ProfilingScope
+{
+    ProfilingScope()
+        : name(nullptr)
+        , category(nullptr)
+        , file(nullptr)
+        , line(-1)
+        , accum(false)
+        , start(0)
+        , duration(0)
+    {};
+    ProfilingScope(const char* name, Util::StringAtom category, const char* file, int line, bool accum)
+        : name(name)
+        , category(category)
+        , file(file)
+        , line(line)
+        , accum(accum)
+        , start(0)
+        , duration(0)
+    {};
+    const char* name;
+    Util::StringAtom category;
+    const char* file;
+    int line;
+    bool accum;
+    Timing::Time start;
+    Timing::Time duration;
+    Util::Array<ProfilingScope> children;
+};
+struct ProfilingScopeLock
+{
+    ProfilingScopeLock(const char* name, Util::StringAtom category, const char* file, int line, bool accum = false)
+    {
+        scope.name = name;
+        scope.category = category;
+        scope.file = file;
+        scope.line = line;
+        scope.accum = accum;
+        ProfilingPushScope(scope);
+    }
+    ~ProfilingScopeLock()
+    {
+        ProfilingPopScope();
+    }
+    ProfilingScope scope;
+};
+struct ProfilingContext
+{
+    ProfilingContext()
+        : threadName(Threading::Thread::GetMyThreadName())
+        , threadId(Threading::Thread::GetMyThreadId())
+    {};
+    Util::Stack<ProfilingScope> scopes;
+    Util::Array<ProfilingScope> topLevelScopes;
+    Timing::Timer timer;
+    Util::StringAtom threadName;
+    Threading::ThreadId threadId;
+};
+}

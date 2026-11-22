@@ -1,0 +1,4 @@
+#pragma once
+#ifndef FOUNDATION_FOUNDATION_H
+#define FOUNDATION_FOUNDATION_H
+#endif

@@ -1,0 +1,320 @@
+#pragma once
+#include "util/string.h"
+namespace CoreGraphics
+{
+struct VertexLayoutId;
+struct VertexLayoutCreateInfo;
+const VertexLayoutId CreateVertexLayout(const VertexLayoutCreateInfo& info);
+class VertexComponent
+{
+public:
+    enum Format
+    {
+        Float,
+        Float2,
+        Float3,
+        Float4,
+        Half,
+        Half2,
+        Half3,
+        Half4,
+        UInt,
+        UInt2,
+        UInt3,
+        UInt4,
+        Int,
+        Int2,
+        Int3,
+        Int4,
+        Short,
+        Short2,
+        Short3,
+        Short4,
+        UShort,
+        UShort2,
+        UShort3,
+        UShort4,
+        UByte4,
+        Byte4,
+        UByte4N,
+        Byte4N,
+        Short2N,
+        Short4N,
+        UShort2N,
+        UShort4N,
+        InvalidFormat,
+    };
+    enum IndexName
+    {
+        Position = 0,
+        Normal = 1,
+        TexCoord1 = 2,
+        Tangent = 3,
+        Binormal = 4,
+        Color = 5,
+        TexCoord2 = 6,
+        SkinWeights = 7,
+        SkinJIndices = 8,
+        TexCoord3 = 9,
+        TexCoord4 = 10,
+        Invalid,
+    };
+    enum StrideType
+    {
+        PerVertex,
+        PerInstance
+    };
+    VertexComponent();
+    VertexComponent(IndexT slot, Format format, IndexT streamIndex = 0, StrideType strideType = PerVertex, SizeT stride = 0);
+    IndexT GetIndex() const;
+    Format GetFormat() const;
+    IndexT GetStreamIndex() const;
+    SizeT GetByteSize() const;
+    Util::String GetSignature() const;
+    StrideType GetStrideType() const;
+    SizeT GetStride() const;
+    static Format StringToFormat(const Util::String& str);
+    static Util::String FormatToString(Format f);
+    static Util::String FormatToSignature(Format f);
+    IndexT GetByteOffset() const;
+protected:
+    friend const CoreGraphics::VertexLayoutId CoreGraphics::CreateVertexLayout(const CoreGraphics::VertexLayoutCreateInfo& info);
+    void SetByteOffset(IndexT offset);
+    IndexT index;
+    Format format;
+    StrideType strideType;
+    SizeT stride;
+    IndexT streamIndex;
+    IndexT byteOffset;
+};
+inline
+VertexComponent::VertexComponent() :
+    index(0),
+    format(Float),
+    strideType(PerVertex),
+    stride(0),
+    streamIndex(0),
+    byteOffset(0)
+{
+}
+inline
+VertexComponent::VertexComponent(IndexT semIndex_, Format format_, IndexT streamIndex_, StrideType strideType_, SizeT stride_) :
+    index(semIndex_),
+    format(format_),
+    strideType(strideType_),
+    stride(stride_),
+    streamIndex(streamIndex_),
+    byteOffset(0)
+{
+}
+inline IndexT
+VertexComponent::GetIndex() const
+{
+    return this->index;
+}
+inline VertexComponent::Format
+VertexComponent::GetFormat() const
+{
+    return this->format;
+}
+inline IndexT
+VertexComponent::GetStreamIndex() const
+{
+    return this->streamIndex;
+}
+inline VertexComponent::StrideType
+VertexComponent::GetStrideType() const
+{
+    return this->strideType;
+}
+inline SizeT
+VertexComponent::GetStride() const
+{
+    return this->stride;
+}
+inline SizeT
+VertexComponent::GetByteSize() const
+{
+    switch (this->format)
+    {
+        case Float:     return 4;
+        case Float2:    return 8;
+        case Float3:    return 12;
+        case Float4:    return 16;
+        case Half:      return 2;
+        case Half2:     return 4;
+        case Half3:     return 6;
+        case Half4:     return 8;
+        case UInt:      return 4;
+        case UInt2:     return 8;
+        case UInt3:     return 12;
+        case UInt4:     return 16;
+        case Int:       return 4;
+        case Int2:      return 8;
+        case Int3:      return 12;
+        case Int4:      return 16;
+        case Short:     return 2;
+        case Short2:    return 4;
+        case Short3:    return 6;
+        case Short4:    return 8;
+        case UShort:    return 2;
+        case UShort2:   return 4;
+        case UShort3:   return 6;
+        case UShort4:   return 8;
+        case UByte4:    return 4;
+        case Byte4:     return 4;
+        case UByte4N:   return 4;
+        case Byte4N:    return 4;
+        case UShort2N:  return 4;
+        case UShort4N:  return 8;
+        case Short2N:   return 4;
+        case Short4N:   return 8;
+        default: break;
+    }
+    n_error("Не может случиться");
+    return 0;
+}
+inline Util::String
+VertexComponent::FormatToString(Format f)
+{
+    switch (f)
+    {
+        case Float:     return "Float";
+        case Float2:    return "Float2";
+        case Float3:    return "Float3";
+        case Float4:    return "Float4";
+        case Half:      return "Half";
+        case Half2:     return "Half2";
+        case Half3:     return "Half3";
+        case Half4:     return "Half4";
+        case UInt:      return "UInt";
+        case UInt2:     return "UInt2";
+        case UInt3:     return "UInt3";
+        case UInt4:     return "UInt4";
+        case Int:       return "Int";
+        case Int2:      return "Int2";
+        case Int3:      return "Int3";
+        case Int4:      return "Int4";
+        case Short:     return "Short";
+        case Short2:    return "Short2";
+        case Short3:    return "Short3";
+        case Short4:    return "Short4";
+        case UShort:    return "UShort";
+        case UShort2:   return "UShort2";
+        case UShort3:   return "UShort3";
+        case UShort4:   return "UShort4";
+        case UByte4:    return "UByte4";
+        case Byte4:     return "Byte4";
+        case UByte4N:   return "UByte4N";
+        case Byte4N:    return "Byte4N";
+        case UShort2N:  return "UShort2N";
+        case UShort4N:  return "UShort4N";
+        case Short2N:   return "Short2N";
+        case Short4N:   return "Short4N";
+        default:
+            n_error("VertexComponent::FormatToString(): неверный код формата!");
+            return "";
+    }
+}
+inline Util::String
+VertexComponent::FormatToSignature(Format f)
+{
+    switch (f)
+    {
+        case Float:     return "f";
+        case Float2:    return "f2";
+        case Float3:    return "f3";
+        case Float4:    return "f4";
+        case Half:      return "h";
+        case Half2:     return "h2";
+        case Half3:     return "h3";
+        case Half4:     return "h4";
+        case UInt:      return "ui";
+        case UInt2:     return "ui2";
+        case UInt3:     return "ui3";
+        case UInt4:     return "ui4";
+        case Int:       return "i";
+        case Int2:      return "i2";
+        case Int3:      return "i3";
+        case Int4:      return "i4";
+        case Short:     return "s";
+        case Short2:    return "s2";
+        case Short3:    return "s3";
+        case Short4:    return "s4";
+        case UShort:    return "us";
+        case UShort2:   return "us2";
+        case UShort3:   return "us3";
+        case UShort4:   return "s4";
+        case UByte4:    return "ub4";
+        case Byte4:     return "b4";
+        case UByte4N:   return "ub4n";
+        case Byte4N:    return "b4n";
+        case UShort2N:   return "us2n";
+        case UShort4N:   return "us4n";
+        case Short2N:   return "s2n";
+        case Short4N:   return "s4n";
+        default:
+            n_error("VertexComponent::FormatToString(): неверный код формата!");
+            return "";
+    }
+}
+inline VertexComponent::Format
+VertexComponent::StringToFormat(const Util::String& str)
+{
+    if (str == "Float") return Float;
+    else if (str == "Float2") return Float2;
+    else if (str == "Float3") return Float3;
+    else if (str == "Float4") return Float4;
+    else if (str == "Half") return Half;
+    else if (str == "Half2") return Half2;
+    else if (str == "Half3") return Half3;
+    else if (str == "Half4") return Half4;
+    else if (str == "UInt") return UInt;
+    else if (str == "UInt2") return UInt2;
+    else if (str == "UInt3") return UInt3;
+    else if (str == "UInt4") return UInt4;
+    else if (str == "Int") return Int;
+    else if (str == "Int2") return Int2;
+    else if (str == "Int3") return Int3;
+    else if (str == "Int4") return Int4;
+    else if (str == "Short") return Short;
+    else if (str == "Short2") return Short2;
+    else if (str == "Short3") return Short3;
+    else if (str == "Short4") return Short4;
+    else if (str == "UShort") return UShort;
+    else if (str == "UShort2") return UShort2;
+    else if (str == "UShort3") return UShort3;
+    else if (str == "UShort4") return UShort4;
+    else if (str == "UByte4") return UByte4;
+    else if (str == "Byte4") return Byte4;
+    else if (str == "UByte4N") return UByte4N;
+    else if (str == "Byte4N") return Byte4N;
+    else if (str == "UShort2N") return UShort2N;
+    else if (str == "UShort4N") return UShort4N;
+    else if (str == "Short2N") return Short2N;
+    else if (str == "Short4N") return Short4N;
+    else
+    {
+        n_error("VertexComponent::StringToFormat(): недопустимая строка '%s'!\n", str.AsCharPtr());
+        return Float;
+    }
+}
+inline Util::String
+VertexComponent::GetSignature() const
+{
+    Util::String str;
+    str.AppendInt(this->streamIndex);
+    str.Append(FormatToSignature(this->format));
+    return str;
+}
+inline void
+VertexComponent::SetByteOffset(IndexT offset)
+{
+    this->byteOffset = offset;
+}
+inline IndexT
+VertexComponent::GetByteOffset() const
+{
+    return this->byteOffset;
+}
+}

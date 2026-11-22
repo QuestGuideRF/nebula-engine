@@ -1,0 +1,13 @@
+#pragma once
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include <string.h>
+#include <time.h>
+#include <ctype.h>
+#include <pthread.h>
+#include <malloc/malloc.h>
+#include <uuid/uuid.h>
+#include <algorithm>
